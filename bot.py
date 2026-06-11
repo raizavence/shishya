@@ -840,7 +840,7 @@ async def notificar_vak(titulo: str, semana_id: int):
     for i in range(0, len(conteudo), CHUNK):
         _enviar(conteudo[i:i + CHUNK])
 
-    _enviar("---\nPara editar, me diga o que mudar. Quando estiver pronta, /postar.")
+    _enviar("---\nVocê quer fazer essa publicação? Responda sim para publicar ou não para cancelar.")
     logger.info("Vāk notificada sobre rascunho autorizado (com texto completo).")
 
 async def enviar_texto_para_vak(update, texto: str):
