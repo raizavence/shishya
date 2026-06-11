@@ -1,0 +1,15 @@
+[Unit]
+Description=Shishya — Companheiro de jornada de Raíza
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/shishya
+ExecStart=/root/shishya/venv/bin/python3 bot.py
+Restart=always
+RestartSec=10
+EnvironmentFile=/root/shishya/.env
+
+[Install]
+WantedBy=multi-user.target
