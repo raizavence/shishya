@@ -498,10 +498,10 @@ Retorne apenas o JSON."""
 
 async def close_day(bot: Bot, state: str):
     messages = get_today_messages()
-    generate_diary(messages, state)
+    await asyncio.to_thread(generate_diary, messages, state)
 
     if state == "com_exposicao" and messages:
-        learning = detect_learning(messages)
+        learning = await asyncio.to_thread(detect_learning, messages)
         if learning:
             with get_db() as conn:
                 conn.execute(
@@ -978,7 +978,7 @@ async def cmd_semana(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     conversations = get_week_conversations()
-    draft = generate_weekly_draft(entries, conversations)
+    draft = await asyncio.to_thread(generate_weekly_draft, entries, conversations)
     if not draft:
         await update.message.reply_text("Não consegui gerar o rascunho agora.")
         return
@@ -1041,7 +1041,7 @@ async def cmd_reflexao(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Não há conversas esta semana.")
         return
 
-    resultado = generate_reflexao(conversations)
+    resultado = await asyncio.to_thread(generate_reflexao, conversations)
     if not resultado or not resultado.get("trocas"):
         await update.message.reply_text("Não encontrei trocas com desenvolvimento de pensamento esta semana.")
         return
@@ -1088,7 +1088,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if get_config("aguardando_estilo") == "1":
         set_config("aguardando_estilo", "")
         await update.message.reply_text("Analisando...")
-        perfil = analyze_writing_style(text)
+        perfil = await asyncio.to_thread(analyze_writing_style, text)
         if perfil:
             set_config("perfil_escrita", json.dumps(perfil, ensure_ascii=False))
             await update.message.reply_text("Perfil de escrita salvo. Vou usar isso nas próximas gerações. 🙏")
@@ -1159,7 +1159,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     history = get_today_messages()
     save_message("user", text)
 
-    response = witness_response(text, history)
+    response = await asyncio.to_thread(witness_response, text, history)
     save_message("assistant", response)
 
     remaining = response
@@ -1183,10 +1183,8 @@ async def transcribe_voice(message) -> str | None:
         file = await voice.get_file()
         buf = io.BytesIO(await file.download_as_bytearray())
         buf.name = "audio.ogg"
-        transcript = openai_client.audio.transcriptions.create(
-            model="whisper-1",
-            file=buf,
-            language="pt",
+        transcript = await asyncio.to_thread(
+            lambda: openai_client.audio.transcriptions.create(model="whisper-1", file=buf, language="pt")
         )
         return transcript.text.strip()
     except Exception:
@@ -1215,7 +1213,7 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
     save_message("user", text)
 
     await update.message.chat.send_action("typing")
-    response = witness_response(text, history)
+    response = await asyncio.to_thread(witness_response, text, history)
     save_message("assistant", response)
 
     remaining = response
