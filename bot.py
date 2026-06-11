@@ -244,15 +244,20 @@ def set_config(key, value):
             (key, str(value))
         )
 
-ENCERRAR  = {"encerrar","encerra","encerro","encerrei","encerramos","encerrando","fechar","fecha","fechei","fechamos","fechando","terminar","termina","termino","terminei","terminamos","terminando","fim","final","finalizar","finaliza","finalize","acabar","acaba","acabei","acabamos","acabando","pronto","chega","para","pare"}
+ENCERRAR  = {"encerrar","encerra","encerro","encerrei","fechar","fecha","fechei","terminar","termina","terminei","finalizar","finaliza","finalize","acabar","acaba","acabei"}
 AUTORIZAR = {"autorizar","autoriza","autorizo","autorizei","autorizamos","autorizando","autorizado","aprovar","aprova","aprovo","aprovei","aprovamos","aprovando","aprovado","liberar","libera","liberado","pode","sim","s","ok","vai","bora","claro","isso","manda","positivo"}
-DESCARTAR = {"descartar","descarta","descarto","descartei","descartamos","descartando","descartado","cancelar","cancela","cancelo","cancelei","cancelamos","cancelando","cancelado","não","nao","n","no","nope","pare","stop","deixa","esquece"}
+DESCARTAR = {"descartar","descarta","descarto","descartei","cancelar","cancela","cancelo","cancelei","cancelado"}
 GERAR_SEMANA = {"semanal","conteúdo semanal","conteudo semanal","post semanal","postagem semanal","rascunho semanal","gerar semana","fazer semana","semana do blog","conteúdo da semana","conteudo da semana"}
 MANDAR_VAK  = {"manda pra vak","manda para a vak","envia pra vak","envia para a vak","manda publicar","publica isso","manda isso pra vak","manda pra vāk","envia pra vāk","pode enviar pra vak","pode enviar para a vak","publicar","publica","pode publicar","enviar pra vak","enviar para vak","enviar para a vak"}
 
 def match(text: str, variants: set) -> bool:
     tokens = text.lower().strip().rstrip(".,!?").split()
     return bool(variants.intersection(tokens)) or any(v in text.lower() for v in variants if " " in v)
+
+def match_exact(text: str, variants: set) -> bool:
+    # Ação destrutiva: só dispara se a mensagem inteira for uma das variantes
+    # — espelhado em vak/bot.py (match_exact)
+    return text.lower().strip().rstrip(".,!? ") in variants
 
 def now_tz():
     return datetime.now(TIMEZONE)
@@ -1111,9 +1116,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await notificar_vak(titulo, int(semana_id))
         return
 
-    if semana_id and match(text, DESCARTAR):
-        set_config("semana_pendente_id", "")
-        await update.message.reply_text("Descartado.")
+    if semana_id and match_exact(text, DESCARTAR):
+        if get_config("semana_descarte_confirmar") == str(semana_id):
+            set_config("semana_pendente_id", "")
+            set_config("semana_descarte_confirmar", "")
+            await update.message.reply_text("Descartado.")
+        else:
+            set_config("semana_descarte_confirmar", str(semana_id))
+            await update.message.reply_text("Tem certeza? Responda *descartar* de novo para confirmar — isso é irreversível.", parse_mode="Markdown")
         return
 
     # Geração de conteúdo semanal via linguagem natural
@@ -1136,8 +1146,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("Não encontrei um texto para enviar. Peça primeiro que eu escreva algo.")
         return
 
-    # Encerramento — só verifica em mensagens curtas (até 5 palavras)
-    if len(text.split()) <= 5 and match(text, ENCERRAR):
+    # Encerramento — só mensagem que seja exatamente uma palavra-chave
+    if match_exact(text, ENCERRAR):
         current_state = get_conversation_state()
         messages = get_today_messages()
 
