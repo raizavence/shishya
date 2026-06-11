@@ -801,6 +801,7 @@ async def notificar_vak(titulo: str, semana_id: int):
     # Escreve pendente no banco da Vāk
     try:
         conn = sqlite3.connect(VAK_DB_PATH)
+        # CONTRATO pendente: {titulo, subtitulo, conteudo, semana_id} — espelhado em vak/bot.py (montar_pendente)
         rascunho_payload = json.dumps({"semana_id": semana_id, "titulo": titulo, "subtitulo": subtitulo, "conteudo": conteudo}, ensure_ascii=False)
         conn.execute(
             "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)",
