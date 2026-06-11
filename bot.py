@@ -260,6 +260,14 @@ def now_tz():
 def today_str():
     return now_tz().strftime("%Y-%m-%d")
 
+def business_date():
+    # Antes das 6h, o "dia" de negócio ainda é ontem — a janela 20h-00h precisa
+    # ver as mensagens gravadas com a data anterior.
+    now = now_tz()
+    if now.hour < 6:
+        return (now - timedelta(hours=6)).strftime("%Y-%m-%d")
+    return now.strftime("%Y-%m-%d")
+
 def now_str():
     return now_tz().isoformat()
 
@@ -267,7 +275,7 @@ def get_today_messages():
     with get_db() as conn:
         rows = conn.execute(
             "SELECT role, content, timestamp FROM conversations WHERE date = ? ORDER BY id",
-            (today_str(),)
+            (business_date(),)
         ).fetchall()
         return [{"role": r["role"], "content": r["content"], "timestamp": r["timestamp"]} for r in rows]
 
@@ -275,19 +283,19 @@ def save_message(role, content):
     with get_db() as conn:
         conn.execute(
             "INSERT INTO conversations (date, role, content, timestamp) VALUES (?, ?, ?, ?)",
-            (today_str(), role, content, now_str())
+            (business_date(), role, content, now_str())
         )
 
 def get_conversation_state():
     state = get_config("conversation_state", "idle")
     state_date = get_config("state_date", "")
-    if state_date != today_str():
+    if state_date != business_date():
         return "idle"
     return state
 
 def set_conversation_state(state):
     set_config("conversation_state", state)
-    set_config("state_date", today_str())
+    set_config("state_date", business_date())
 
 # ─── LLM ──────────────────────────────────────────────────────────────────────
 
@@ -368,7 +376,7 @@ def generate_diary(messages, state):
         if state in ("silencio", "sem_exposicao"):
             conn.execute(
                 "INSERT OR REPLACE INTO diario (date, estado, created_at) VALUES (?, ?, ?)",
-                (today_str(), state, now_str())
+                (business_date(), state, now_str())
             )
             return
 
@@ -425,7 +433,7 @@ Retorne apenas o JSON válido, sem markdown."""
                 apice, ponto_chave, insight_principal, frases_impacto, created_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
-                today_str(),
+                business_date(),
                 "com_exposicao",
                 json.dumps(data.get("temas", []), ensure_ascii=False),
                 json.dumps(data.get("insights", []), ensure_ascii=False),
@@ -1118,7 +1126,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Pega a última mensagem longa da Raíza — ela sempre cola o texto
             row = conn.execute(
                 "SELECT content FROM conversations WHERE date = ? AND role = 'user' AND length(content) > 300 ORDER BY id DESC LIMIT 1",
-                (today_str(),)
+                (business_date(),)
             ).fetchone()
         candidato = row["content"] if row else None
         if candidato:
