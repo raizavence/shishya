@@ -1261,7 +1261,7 @@ def main():
     ))
 
     tz = TIMEZONE
-    app.job_queue.run_daily(job_abertura, time=dt_time(20, 0, tzinfo=tz))
+    app.job_queue.run_daily(job_abertura, time=dt_time(18, 0, tzinfo=tz), days=(5,))
     app.job_queue.run_daily(job_encerramento, time=dt_time(0, 0, tzinfo=tz))
 
     logger.info("Shishya iniciado.")

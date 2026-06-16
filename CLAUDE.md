@@ -30,19 +30,19 @@ Aprende continuamente quem é Raíza, como ela pensa, o que a ocupa.
 
 ---
 
-## Fluxo diário
+## Fluxo semanal de testemunho
 
-**20h00** — Shishya envia:
+**Sábados, 18h00** — Shishya envia:
 1. "Om Shri Gurubhyo Namah 🙏"
 2. "Qual é o assunto da sua mente agora?"
 
-**20h00–23h59** — janela de conversa aberta
+**18h00–23h59** — janela de conversa aberta
 
 **00h00** — encerramento automático:
 - Se houve conversa → estado: `com_exposicao`
 - Se não houve resposta → estado: `silencio`
 
-**Durante o dia** — Raíza pode abrir a conversa a qualquer hora
+**A qualquer hora** — Raíza pode abrir a conversa fora do sábado; Shishya responde normalmente
 
 **Palavra "encerrar"** — Raíza encerra conscientemente:
 - Se conversou → estado: `com_exposicao`
