@@ -28,6 +28,8 @@ logging.basicConfig(
     level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
+# httpx loga a URL completa de cada requisição (inclui o token do bot) em nível INFO.
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -1243,10 +1245,15 @@ async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ─── MAIN ─────────────────────────────────────────────────────────────────────
 
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
+    logger.error("Exceção não tratada:", exc_info=context.error)
+
+
 def main():
     init_db()
 
     app = Application.builder().token(TELEGRAM_TOKEN).build()
+    app.add_error_handler(error_handler)
 
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("diario", cmd_diario))
