@@ -33,7 +33,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-GHOST_URL      = os.getenv("GHOST_URL", "https://raizavenceslau.com.br")
+GHOST_URL      = os.getenv("GHOST_URL", "https://raizavenceslau.com.br/blog")
 GHOST_ADMIN_KEY = os.getenv("GHOST_ADMIN_KEY", "")
 VAK_TOKEN      = os.getenv("VAK_TOKEN", "")
 VAK_DB_PATH    = os.getenv("VAK_DB_PATH", "/root/vak/memoria.db")
